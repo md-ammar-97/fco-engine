@@ -14,9 +14,16 @@ Local Docker sidecar architecture for Fuel Cost Optimization.
 - one active run at a time
 - external Docker network shared with n8n
 
-## Step 3 status
+## Step 4 status
 Included:
-- production API endpoints for submit/status/manifest/download
-- queue/state transitions
-- callback contract from worker to n8n
-- placeholder run executor for Step 4 migration of full FCO logic
+- real preprocessing pipeline scaffold for loads/fuel/city mapping/routes
+- workbook generation
+- PDF generation
+- heuristic scenario outputs
+- callback + manifest integration
+
+Still pending for full optimization parity:
+- ORS route geometry
+- corridor station extraction
+- exact multi-stop optimization
+- richer fuel/load matching logic
