@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+requests
+pandas
+numpy
+openpyxl
+XlsxWriter
+scikit-learn
+pulp
+geopy
+reportlab

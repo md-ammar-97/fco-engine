@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  fco-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: fco-api
+    user: "1000:1000"
+    env_file:
+      - .env.example
+    volumes:
+      - ./shared:/shared/fco
+    ports:
+      - "8000:8000"
+
+  fco-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: fco-worker
+    user: "1000:1000"
+    env_file:
+      - .env.example
+    volumes:
+      - ./shared:/shared/fco
+    depends_on:
+      - fco-api
