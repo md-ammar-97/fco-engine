@@ -1,5 +1,3 @@
-"""SQLite-backed queue helpers for FCO runs."""
-
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -7,7 +5,6 @@ from app.core.db import get_conn
 
 
 def claim_next_queued_run() -> Optional[str]:
-    """Claim the next queued run and return its run_id."""
     now = datetime.now(timezone.utc).isoformat()
 
     with get_conn() as conn:
@@ -33,3 +30,8 @@ def update_run_status(run_id: str, status: str, error_message: str | None = None
             "UPDATE runs SET status = ?, error_message = ?, updated_at = ? WHERE run_id = ?",
             (status, error_message, now, run_id),
         )
+
+
+def get_run_record(run_id: str):
+    with get_conn() as conn:
+        return conn.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()

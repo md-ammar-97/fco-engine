@@ -14,10 +14,9 @@ Local Docker sidecar architecture for Fuel Cost Optimization.
 - one active run at a time
 - external Docker network shared with n8n
 
-## Step 2 status
-Production Docker/compose scaffolding is included:
-- `Dockerfile.api`
-- `Dockerfile.worker`
-- `docker-compose.yml`
-- `deployment/n8n-compose-snippet.yml`
-- `deployment/STEP2_SETUP.md`
+## Step 3 status
+Included:
+- production API endpoints for submit/status/manifest/download
+- queue/state transitions
+- callback contract from worker to n8n
+- placeholder run executor for Step 4 migration of full FCO logic

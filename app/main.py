@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.download import router as download_router
 from app.api.health import router as health_router
 from app.api.submit_run import router as submit_run_router
 from app.api.run_status import router as run_status_router
@@ -18,3 +19,4 @@ def startup() -> None:
 app.include_router(health_router)
 app.include_router(submit_run_router)
 app.include_router(run_status_router)
+app.include_router(download_router)
