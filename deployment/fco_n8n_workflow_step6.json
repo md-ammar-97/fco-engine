@@ -1,0 +1,807 @@
+{
+  "name": "FCO Orchestrator - Step 6",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "fco-intake",
+        "formTitle": "FCO Intake Form",
+        "formDescription": "Upload FCO inputs and configuration. This workflow saves files to the shared volume, submits the run to fco-api, waits for callback, and falls back to the status API if callback is delayed.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Loads_File",
+              "fieldType": "file",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Fuel_Statement_File",
+              "fieldType": "file",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Fuel_Prices_File",
+              "fieldType": "file",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Axestrack_Logo",
+              "fieldType": "file",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Client_Logo",
+              "fieldType": "file",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Client_Full_Name",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Fueling_Partner_Name",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Report_Month",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Assumed_MPG",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Starting_Fuel_1",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Starting_Fuel_2",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Starting_Fuel_3",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Ending_Fuel_Reserve",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Tank_Capacity",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Route_Cluster_Radius_Miles",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Corridor_Radius_Miles",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Rough_Cost_Decision_Threshold",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Current_CPG_Override",
+              "fieldType": "number",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Publish_To_Google_Sheets",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "optionsList": [
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                },
+                {
+                  "name": "No",
+                  "value": "No"
+                }
+              ]
+            },
+            {
+              "fieldLabel": "Google_Drive_Folder_Id",
+              "fieldType": "text",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Google_Sheets_Target_Id",
+              "fieldType": "text",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Google_Sheet_Name_Prefix",
+              "fieldType": "text",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Output_File_Base_Name",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Loads_Sheet_Name",
+              "fieldType": "text",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Fuel_Statement_Sheet_Name",
+              "fieldType": "text",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Fuel_Prices_Sheet_Name",
+              "fieldType": "text",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Force_Rerun",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "optionsList": [
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                },
+                {
+                  "name": "No",
+                  "value": "No"
+                }
+              ]
+            },
+            {
+              "fieldLabel": "Loads_Mapping_JSON",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Fuel_Statement_Mapping_JSON",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Fuel_Prices_Mapping_JSON",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "ORS_API_Key",
+              "fieldType": "text",
+              "requiredField": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "66f5c80e-0260-41eb-8e5d-becc7caf27b5",
+      "name": "FCO Intake Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst boolYesNo = (v) => String(v || '').trim().toLowerCase() === 'yes';\nconst toNum = (v, fallback = 0) => {\n  const n = Number(v);\n  return Number.isFinite(n) ? n : fallback;\n};\n\nconst item = $input.first();\nconst j = item.json;\n\nreturn [{\n  json: {\n    ...j,\n    Publish_To_Google_Sheets_Bool: boolYesNo(j.Publish_To_Google_Sheets),\n    Force_Rerun_Bool: boolYesNo(j.Force_Rerun),\n    Assumed_MPG_Num: toNum(j.Assumed_MPG, 5),\n    Starting_Fuel_1_Num: toNum(j.Starting_Fuel_1, 100),\n    Starting_Fuel_2_Num: toNum(j.Starting_Fuel_2, 150),\n    Starting_Fuel_3_Num: toNum(j.Starting_Fuel_3, 180),\n    Ending_Fuel_Reserve_Num: toNum(j.Ending_Fuel_Reserve, 40),\n    Tank_Capacity_Num: toNum(j.Tank_Capacity, 240),\n    Route_Cluster_Radius_Miles_Num: toNum(j.Route_Cluster_Radius_Miles, 50),\n    Corridor_Radius_Miles_Num: toNum(j.Corridor_Radius_Miles, 15),\n    Rough_Cost_Decision_Threshold_Num: toNum(j.Rough_Cost_Decision_Threshold, 5000),\n    Current_CPG_Override_Num: toNum(j.Current_CPG_Override, 0),\n  },\n  binary: item.binary\n}];\n"
+      },
+      "id": "19bbdc36-4a49-41a4-9fec-d0a975a1630c",
+      "name": "Normalize Inputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction slugify(s) {\n  return String(s || 'client')\n    .trim()\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '-')\n    .replace(/^-+|-+$/g, '') || 'client';\n}\n\nfunction rand(len = 32) {\n  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\n  let out = '';\n  for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)];\n  return out;\n}\n\nconst item = $input.first();\nconst j = item.json;\nconst now = new Date();\nconst stamp = now.toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);\nconst baseShared = $env.FCO_SHARED_CONTAINER_PATH || '/shared/fco';\nconst runId = `fco_${slugify(j.Client_Full_Name)}_${stamp}`;\nconst callbackToken = rand(32);\n\nconst runRoot = `${baseShared}/runs/${runId}`;\nconst inputDir = `${runRoot}/input`;\nconst outputDir = `${runRoot}/output`;\nconst logsDir = `${runRoot}/logs`;\nconst stateDir = `${runRoot}/state`;\n\nreturn [{\n  json: {\n    ...j,\n    run_id: runId,\n    callback_token: callbackToken,\n    run_root: runRoot,\n    input_dir: inputDir,\n    output_dir: outputDir,\n    logs_dir: logsDir,\n    state_dir: stateDir,\n    callback_url: `${$env.N8N_HOST_PROTOCOL || 'http'}://${$env.N8N_HOST || 'localhost'}:${$env.N8N_PORT || '5678'}/webhook/fco-callback/${runId}`\n  },\n  binary: item.binary\n}];\n"
+      },
+      "id": "c2413f86-a3f8-4ccc-93a5-cb304501f70f",
+      "name": "Generate Run Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "mkdir -p \"{{$json.input_dir}}\" \"{{$json.output_dir}}\" \"{{$json.logs_dir}}\" \"{{$json.state_dir}}\""
+      },
+      "id": "0758edb8-8527-44d4-a2a8-23d32415c5fc",
+      "name": "Create Run Folders",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{$json.input_dir + '/loads' + ($binary.Loads_File?.fileExtension ? '.' + $binary.Loads_File.fileExtension : '.bin')}}",
+        "dataPropertyName": "Loads_File"
+      },
+      "id": "9a14ce90-c509-4afa-83a3-c5ce9eb05402",
+      "name": "Write Loads File",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{$json.input_dir + '/fuel_statement' + ($binary.Fuel_Statement_File?.fileExtension ? '.' + $binary.Fuel_Statement_File.fileExtension : '.bin')}}",
+        "dataPropertyName": "Fuel_Statement_File"
+      },
+      "id": "c1087d5f-2c8b-43ff-bb9e-f295eccdc320",
+      "name": "Write Fuel Statement File",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{$json.input_dir + '/fuel_prices' + ($binary.Fuel_Prices_File?.fileExtension ? '.' + $binary.Fuel_Prices_File.fileExtension : '.bin')}}",
+        "dataPropertyName": "Fuel_Prices_File"
+      },
+      "id": "b6274619-ad94-4457-b026-3a02c2af3e6b",
+      "name": "Write Fuel Prices File",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{$json.input_dir + '/axestrack_logo' + ($binary.Axestrack_Logo?.fileExtension ? '.' + $binary.Axestrack_Logo.fileExtension : '.bin')}}",
+        "dataPropertyName": "Axestrack_Logo"
+      },
+      "id": "6de1cf5c-f12d-4581-bb5b-db5b7724f2a5",
+      "name": "Write Axestrack Logo",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{$json.input_dir + '/client_logo' + ($binary.Client_Logo?.fileExtension ? '.' + $binary.Client_Logo.fileExtension : '.bin')}}",
+        "dataPropertyName": "Client_Logo"
+      },
+      "id": "b5f14c09-b3a9-4e8d-aea1-0d6f979c1218",
+      "name": "Write Client Logo",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "5ae8f7f4-a39a-4f07-97dc-6b8b46929f44",
+      "name": "Merge Written Files",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1320,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = $input.first().json;\n\nreturn [{\n  json: {\n    run_id: j.run_id,\n    input_dir: j.input_dir,\n    output_dir: j.output_dir,\n    callback_url: j.callback_url,\n    callback_token: j.callback_token,\n    config: {\n      client_full_name: j.Client_Full_Name,\n      fueling_partner_name: j.Fueling_Partner_Name,\n      report_month: j.Report_Month,\n      assumed_mpg: j.Assumed_MPG_Num,\n      start_fuel_scenarios: [\n        j.Starting_Fuel_1_Num,\n        j.Starting_Fuel_2_Num,\n        j.Starting_Fuel_3_Num\n      ],\n      ending_fuel_reserve: j.Ending_Fuel_Reserve_Num,\n      tank_capacity: j.Tank_Capacity_Num,\n      eligibility_miles: 1000,\n      route_cluster_radius_miles: j.Route_Cluster_Radius_Miles_Num,\n      corridor_radius_miles: j.Corridor_Radius_Miles_Num,\n      decision_threshold: j.Rough_Cost_Decision_Threshold_Num,\n      current_cpg_override: j.Current_CPG_Override_Num,\n      ors_api_key: j.ORS_API_Key || '',\n      publish_to_google_sheets: j.Publish_To_Google_Sheets_Bool,\n      google_drive_folder_id: j.Google_Drive_Folder_Id || '',\n      google_sheets_target_id: j.Google_Sheets_Target_Id || '',\n      google_sheet_name_prefix: j.Google_Sheet_Name_Prefix || '',\n      output_file_base_name: j.Output_File_Base_Name,\n      force_rerun: j.Force_Rerun_Bool,\n      loads_sheet_name: j.Loads_Sheet_Name || '',\n      fuel_statement_sheet_name: j.Fuel_Statement_Sheet_Name || '',\n      fuel_prices_sheet_name: j.Fuel_Prices_Sheet_Name || ''\n    },\n    mappings: {\n      loads: JSON.parse(j.Loads_Mapping_JSON),\n      fuel_statement: JSON.parse(j.Fuel_Statement_Mapping_JSON),\n      fuel_prices: JSON.parse(j.Fuel_Prices_Mapping_JSON)\n    }\n  }\n}];\n"
+      },
+      "id": "6d58bcbd-d1a9-4480-9cc9-f0eaa3fc1560",
+      "name": "Build Submit Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.FCO_API_BASE_URL + '/run-fco'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "07f2e19b-d9be-462f-a08b-fd265bef30c6",
+      "name": "Submit Job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1840,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 60,
+        "unit": "minutes"
+      },
+      "id": "d515d90a-f63c-4592-a6fd-7a08783ace8d",
+      "name": "Wait for FCO Callback",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        2100,
+        280
+      ],
+      "notes": "Configure this Wait node to resume by webhook after import. Use the generated resume/callback URL in the job payload if you prefer native wait URLs over the deterministic callback URL scaffold."
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst item = $input.first();\nconst body = item.json;\nconst headers = body.headers || {};\nconst expectedToken = $('Generate Run Context').first().json.callback_token;\nconst expectedRunId = $('Generate Run Context').first().json.run_id;\n\nconst receivedToken =\n  headers['x-fco-callback-token'] ||\n  headers['X-FCO-Callback-Token'] ||\n  '';\n\nconst valid = String(body.run_id || '') === String(expectedRunId)\n  && String(receivedToken || '') === String(expectedToken);\n\nreturn [{\n  json: {\n    valid_callback: valid,\n    callback_body: body,\n    expected_run_id: expectedRunId,\n    callback_success: Boolean(body.success)\n  }\n}];\n"
+      },
+      "id": "4467691c-e97b-4bbe-a75c-54d06486804d",
+      "name": "Validate Callback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2360,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.valid_callback}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "5d1fcf27-ab80-4b10-9d24-6efcbeeee1a4",
+      "name": "If Callback Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2620,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.callback_success}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "35a5d83b-6873-468d-9e98-f7dfe28cfe75",
+      "name": "If Callback Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.FCO_API_BASE_URL + '/runs/' + $('Generate Run Context').first().json.run_id}}",
+        "options": {}
+      },
+      "id": "600aee6b-b8a9-41c7-b887-273cfdcb4947",
+      "name": "Check Run Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2360,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.status}}",
+              "value2": "completed"
+            }
+          ]
+        }
+      },
+      "id": "08885d03-861f-4a4e-a9aa-1614b9824864",
+      "name": "If Status Completed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2620,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.FCO_API_BASE_URL + '/runs/' + $('Generate Run Context').first().json.run_id + '/manifest'}}",
+        "options": {}
+      },
+      "id": "4f3e08b9-eacb-4fd7-86d2-6f5037a9e3ab",
+      "name": "Get Manifest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2880,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst m = $input.first().json.manifest || $input.first().json.callback_body || $input.first().json;\n\nreturn [{\n  json: {\n    success: true,\n    run_id: m.run_id,\n    message: 'FCO run completed successfully.',\n    workbook_download_url: `${$env.FCO_API_BASE_URL}/runs/${m.run_id}/download/workbook`,\n    pdf_download_url: `${$env.FCO_API_BASE_URL}/runs/${m.run_id}/download/pdf`,\n    google_sheet_url: m.google_sheet_url || '',\n    summary: m.summary || {}\n  }\n}];\n"
+      },
+      "id": "9fecaaca-6406-413a-af03-1b6069086aff",
+      "name": "Build Success Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3140,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = $input.first().json;\nreturn [{\n  json: {\n    success: false,\n    run_id: j.run_id || $('Generate Run Context').first().json.run_id,\n    message: j.error || j.error_message || 'FCO run failed.',\n    details: j\n  }\n}];\n"
+      },
+      "id": "b9e2263a-c027-4c88-8088-0131f1340080",
+      "name": "Build Failure Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3140,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "0a0b48e4-2112-490f-8fd2-c6d01253b0de",
+      "name": "Form Completion",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        3400,
+        340
+      ]
+    }
+  ],
+  "connections": {
+    "FCO Intake Form": {
+      "main": [
+        [
+          {
+            "node": "Normalize Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Inputs": {
+      "main": [
+        [
+          {
+            "node": "Generate Run Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Run Context": {
+      "main": [
+        [
+          {
+            "node": "Create Run Folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Run Folders": {
+      "main": [
+        [
+          {
+            "node": "Write Loads File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Write Fuel Statement File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Write Fuel Prices File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Write Axestrack Logo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Write Client Logo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Loads File": {
+      "main": [
+        [
+          {
+            "node": "Merge Written Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Fuel Statement File": {
+      "main": [
+        [
+          {
+            "node": "Merge Written Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Fuel Prices File": {
+      "main": [
+        [
+          {
+            "node": "Merge Written Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Axestrack Logo": {
+      "main": [
+        [
+          {
+            "node": "Merge Written Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Client Logo": {
+      "main": [
+        [
+          {
+            "node": "Merge Written Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Written Files": {
+      "main": [
+        [
+          {
+            "node": "Build Submit Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Submit Payload": {
+      "main": [
+        [
+          {
+            "node": "Submit Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit Job": {
+      "main": [
+        [
+          {
+            "node": "Wait for FCO Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for FCO Callback": {
+      "main": [
+        [
+          {
+            "node": "Validate Callback",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Run Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Callback": {
+      "main": [
+        [
+          {
+            "node": "If Callback Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Callback Valid": {
+      "main": [
+        [
+          {
+            "node": "If Callback Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Failure Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Callback Success": {
+      "main": [
+        [
+          {
+            "node": "Build Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Failure Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Run Status": {
+      "main": [
+        [
+          {
+            "node": "If Status Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Status Completed": {
+      "main": [
+        [
+          {
+            "node": "Get Manifest",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Failure Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Manifest": {
+      "main": [
+        [
+          {
+            "node": "Build Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Success Response": {
+      "main": [
+        [
+          {
+            "node": "Form Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Failure Response": {
+      "main": [
+        [
+          {
+            "node": "Form Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "saveExecutionProgress": true
+  },
+  "versionId": "71b5f329-9c30-453a-b494-b208653d436e",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
