@@ -1,0 +1,17 @@
+# Merge this into your existing n8n docker-compose project.
+# It adds the shared FCO folder mount and joins the shared external network.
+
+services:
+  n8n:
+    env_file:
+      - .env
+    volumes:
+      - ${FCO_SHARED_HOST_PATH}:/shared/fco
+    networks:
+      - default
+      - fco_net
+
+networks:
+  fco_net:
+    external: true
+    name: ${DOCKER_NETWORK_NAME}

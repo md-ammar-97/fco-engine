@@ -5,24 +5,52 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.api
+      args:
+        PUID: ${PUID}
+        PGID: ${PGID}
     container_name: fco-api
-    user: "1000:1000"
+    restart: unless-stopped
+    user: "${PUID}:${PGID}"
     env_file:
-      - .env.example
+      - .env
+    environment:
+      PYTHONPATH: /app
     volumes:
-      - ./shared:/shared/fco
+      - ${FCO_SHARED_HOST_PATH}:/shared/fco
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - fco_net
 
   fco-worker:
     build:
       context: .
       dockerfile: Dockerfile.worker
+      args:
+        PUID: ${PUID}
+        PGID: ${PGID}
     container_name: fco-worker
-    user: "1000:1000"
+    restart: unless-stopped
+    user: "${PUID}:${PGID}"
     env_file:
-      - .env.example
+      - .env
+    environment:
+      PYTHONPATH: /app
     volumes:
-      - ./shared:/shared/fco
+      - ${FCO_SHARED_HOST_PATH}:/shared/fco
     depends_on:
-      - fco-api
+      fco-api:
+        condition: service_healthy
+    networks:
+      - fco_net
+
+networks:
+  fco_net:
+    external: true
+    name: ${DOCKER_NETWORK_NAME}
